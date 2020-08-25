@@ -7,7 +7,7 @@
 
 <title>Cube-Codes Console</title>
 
-<!--<link type="image/png" rel="icon" href="favicon.png">-->
+<link rel="icon" href="favicon.ico">
 
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
 
@@ -384,7 +384,7 @@ class CubeHistory extends Observable {
 <body>
 
 <nav class="navbar navbar-dark bg-dark">
-  <span class="navbar-brand">Cube-Codes Console</span>
+	<span class="navbar-brand"><img src="own-icons/cube.svg" style="vertical-align: text-bottom; height: 28px; margin-right: 6px; filter: invert(1); " />Cube-Codes Console</span>
 </nav>
 
 <main class="container-fluid">
@@ -455,7 +455,7 @@ class CubeHistory extends Observable {
 			<section class="btn-toolbar">
 				<div class="btn-group btn-group-sm">
 					<button type="button" id="button-history-jump-start" class="btn btn-secondary" title="Jump to start"><img src="bootstrap-icons/skip-backward-fill.svg" /></button>
-					<button type="button" id="button-history-play-back"  class="btn btn-secondary" title="Play back"><img src="own-icons/play-back.svg" /></button>
+					<button type="button" id="button-history-play-back"  class="btn btn-secondary" title="Play back"><img class="flip" src="bootstrap-icons/play-fill.svg" /></button>
 					<button type="button" id="button-history-step-back"  class="btn btn-secondary" title="Play step back"><img src="bootstrap-icons/skip-start-fill.svg" /></button>
 					<button type="button" id="button-history-stop"       class="btn btn-danger"    title="Stop playing" disabled="true"><img src="bootstrap-icons/stop-fill.svg" /></button>
 					<button type="button" id="button-history-step-ahead" class="btn btn-secondary" title="Play step ahead"><img src="bootstrap-icons/skip-end-fill.svg" /></button>
