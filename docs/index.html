@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<title>Rubix</title>
+
+<!--<link type="image/png" rel="icon" href="favicon.png">-->
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+<style type="text/css">
+
+	main > .row:nth-child(1) {
+		min-height: calc(100vh - 56px - 100px);
+	}
+
+	main > .row:nth-child(2) {
+		height: 100px;
+	}
+	
+	.panel > .btn-toolbar {
+		background-color: #b8c0c7;
+		padding: 8px 16px;
+		height: 50px;
+	}
+	
+	#panel-control > .btn-toolbar {
+		margin: 0 -15px;
+	}
+	
+	.btn > img {
+		 filter: invert(1);
+		 margin-top: -4px;
+	}
+	
+	.btn > img + span {
+		 margin-left: 6px;
+	}
+	
+	.dropdown-item {
+		cursor: pointer;
+	}
+	
+	img.flip {
+		transform: scaleX(-1);
+	}
+	
+	#panel-control > section {
+		text-align: center;
+		margin: 80px 0;
+	}
+
+	#section-cube-control {
+		text-align: center;
+	}
+
+	#section-cube-control button {
+		width: 100px;
+		margin: 0 5px 10px 5px;
+	}
+	
+	#section-history-changes {
+		position: absolute;
+		top: 50px;
+		bottom: 0;
+		width: 100%;
+		overflow-x: scroll;
+	}
+	
+	#section-history-changes > span {
+		display: inline-block;
+		padding: 2px;
+		margin-left: 1px;
+		border: 1px solid #DDD;
+		background-color: #DDD;
+		font-family: monospace;
+		cursor: pointer;
+	}
+	
+	#section-history-changes > span.current {
+		border-color: #BBB;
+		background-color: #BBB;
+	}
+	
+	#section-history-changes > span:hover {
+		border-color: #CCC;
+		background-color: #CCC;
+	}
+	
+	#editor {
+		position: absolute;
+		top: 50px;
+		bottom: 0;
+		width: 100%;
+	}
+
+</style>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+<script src="https://pagecdn.io/lib/ace/1.4.12/ace.js" crossorigin="anonymous" integrity="sha256-Q9hnBpgBFstzZOr+OKFOWZWfcF5nFXO8Qz48Nmndo6U="></script>
+<script type="text/javascript">
+
+var editor;
+var cube;
+
+	$(function() {
+
+		editor = ace.edit('editor', {
+			mode: 'ace/mode/javascript',
+			newLineMode: 'unix',
+			useSoftTabs: false,
+			tabSize: 4,
+			dragEnabled: false,
+			showPrintMargin: false,
+			theme: 'ace/theme/textmate',
+			fixedWidthGutter: true
+		});
+		editor.renderer.setScrollMargin(6, 0, 0, 0);
+		editor.on('input', function() {
+			$('#button-editor-undo').prop('disabled', !editor.session.getUndoManager().hasUndo());
+			$('#button-editor-redo').prop('disabled', !editor.session.getUndoManager().hasRedo());
+		});
+		
+		$('#button-editor-run'            ).on('click', function(e) { /*TODO To worker thread */ Function('"use strict";' + "\n" + editor.getValue())(); });
+		$('#button-editor-undo'           ).on('click', function(e) { editor.undo(); });
+		$('#button-editor-redo'           ).on('click', function(e) { editor.redo(); });
+		$('#button-editor-search'         ).on('click', function(e) { editor.execCommand('find'); });
+		$('#button-editor-show-invisibles').on('click', function(e) { editor.setOption('showInvisibles', !editor.getOption('showInvisibles')); });
+
+		cube = new Cube(0);
+		cube.on('change', function(e) { this.log('Event: cube.change', e); }, console);
+		cube.on('change', function(e) { this.html(e.newState); }, $('#section-cube-display'));
+		$('#section-cube-display').html(cube.getState());
+		
+		var cubeHistory = new CubeHistory(cube);
+		cubeHistory.on('move', function(e) { this.log('Event: cubeHistory.move', e); }, console);
+		cubeHistory.on('record', function(e) { this.log('Event: cubeHistory.record', e); }, console);
+		cubeHistory.on('branchCleaned', function(e) { this.log('Event: cubeHistory.branchCleaned', e); }, console);
+		cubeHistory.on('move', function(e) { $('#section-history-changes > span:nth-child(' + (e.from + 2) + ')').removeClass('current'); $('#section-history-changes > span:nth-child(' + (e.to + 2) + ')').addClass('current'); }, console);
+		cubeHistory.on('record', function(e) { $('#section-history-changes').append('<span>' + (e.change.transition || 'S') + '</span>'); }, console);
+		cubeHistory.on('branchCleaned', function(e) { $('#section-history-changes').children().slice(e.from + 1).remove(); }, console);
+		$('#section-history-changes').append('<span class="current">I</span>');
+		var updateHistoryButtons = function() {
+			$('#button-history-jump-start').prop('disabled', cubeHistory.isAtStart());
+			$('#button-history-play-back' ).prop('disabled', cubeHistory.isAtStart());
+			$('#button-history-step-back' ).prop('disabled', cubeHistory.isAtStart());
+			$('#button-history-step-ahead').prop('disabled', cubeHistory.isAtEnd());
+			$('#button-history-play-ahead').prop('disabled', cubeHistory.isAtEnd());
+			$('#button-history-jump-end'  ).prop('disabled', cubeHistory.isAtEnd());
+		};
+		cubeHistory.on('move', updateHistoryButtons);
+		updateHistoryButtons();
+		$('#section-history-changes').on('click', 'span', function(e) {  cubeHistory.jumpToIndex($(this).index() - 1); });
+
+		$('#button-history-jump-start').on('click', function(e) { cubeHistory.jumpToStart(); });
+		$('#button-history-jump-end'  ).on('click', function(e) { cubeHistory.jumpToEnd(); });
+		$('#button-history-step-back' ).on('click', function(e) { cubeHistory.stepBack(); });
+		$('#button-history-step-ahead').on('click', function(e) { cubeHistory.stepAhead(); });
+		
+		$('#button-cube-left'  ).on('click', function(e) { cube.transition(1); });
+		$('#button-cube-center').on('click', function(e) { cube.transition(2); });
+		$('#button-cube-right' ).on('click', function(e) { cube.transition(3); });
+		$('#button-cube-top'   ).on('click', function(e) { cube.transition(4); });
+		$('#button-cube-ground').on('click', function(e) { cube.transition(5); });
+		$('#button-cube-bottom').on('click', function(e) { cube.transition(6); });
+		$('#button-cube-front' ).on('click', function(e) { cube.transition(7); });
+		$('#button-cube-middle').on('click', function(e) { cube.transition(8); });
+		$('#button-cube-stern' ).on('click', function(e) { cube.transition(9); });
+
+	});
+	
+class EventType {
+	constructor() {
+		this.name = name;
+		this.listeners = [];
+	}
+	registerListener(callback, scope) {
+		this.listeners.push({
+			callback: callback,
+			scope: scope
+		});
+	}
+}
+
+class Observable {
+	constructor() {
+		this.eventTypes = {};
+	}
+	registerEventType(name) {
+		var eventType = new EventType(name);
+		this.eventTypes[name] = eventType;
+	}
+	trigger(eventTypeName, event) {
+		this.eventTypes[eventTypeName].listeners.forEach(function(listener) {
+			listener.callback.apply(listener.scope, [event]);
+		});
+	}
+	on(eventTypeName, callback, scope) {
+		this.eventTypes[eventTypeName].registerListener(callback, scope);
+	}
+}
+
+class Cube extends Observable {
+	constructor(state) {
+	
+		super();
+		
+		this.state = state;
+		
+		this.registerEventType('change');
+		
+	}
+	getState() {
+		return this.state;
+	}
+	setState(newState, sender) {
+		var oldState = this.state;
+		this.state = newState;
+		this.trigger('change', {
+			oldState: oldState,
+			newState: newState,
+			sender: sender
+		});
+	}
+	transition(value, sender) {
+		var oldState = this.state;
+		this.state += value;
+		this.trigger('change', {
+			transition: value,
+			oldState: oldState,
+			newState: this.state,
+			sender: sender
+		});
+	}
+}
+
+class CubeHistory extends Observable {
+	constructor(cube) {
+		
+		super();
+		
+		this.cube = cube;
+		this.cubeStartState = this.cube.getState();
+		this.changes = [];
+		this.currentChangeIndex = -1;
+		
+		this.registerEventType('move');
+		this.registerEventType('record');
+		this.registerEventType('branchCleaned');
+		
+		this.cube.on('change', function(e) {
+		
+			// If the change was triggered by the history, do not record but move only
+			if(e.sender && typeof e.sender.history === 'number') {
+				var oldCurrentChangeIndex = this.currentChangeIndex;
+				this.currentChangeIndex += e.sender.history;
+				this.trigger('move', {
+					from: oldCurrentChangeIndex,
+					by: e.sender.history,
+					to: this.currentChangeIndex
+				});
+				return;
+			}
+			
+			var nextIndex = this.currentChangeIndex + 1;
+			
+			// If we are currently not at the end, remove the history ahead of us
+			if(this.changes.length !== nextIndex) {
+				//TODO: Ask whether this is ok!!!
+				this.changes.splice(nextIndex, this.changes.length - nextIndex);
+				this.trigger('branchCleaned', {
+					from: nextIndex
+				});
+			}
+			
+			// Record change and move
+			var newChange = {
+				transition: e.transition,
+				oldState: e.oldState,
+				newState: e.newState
+			};
+			this.changes.push(newChange);
+			this.trigger('record', {
+				change: newChange,
+				index: this.currentChangeIndex + 1
+			});
+			var oldCurrentChangeIndex = this.currentChangeIndex;
+			this.currentChangeIndex++;
+			this.trigger('move', {
+				from: oldCurrentChangeIndex,
+				by: 1,
+				to: this.currentChangeIndex
+			});
+			
+		}, this);
+		
+	}
+	isAtStart() {
+		return this.currentChangeIndex <= -1;
+	}
+	isAtEnd() {
+		return this.currentChangeIndex >= this.changes.length - 1;
+	}
+	stepBack() {
+		
+		if(this.isAtStart()) throw 'Cannot go further back';
+		
+		var lastChange = this.changes[this.currentChangeIndex];
+		if(lastChange.transition) {
+			this.cube.transition(-lastChange.transition, {
+				history: -1
+			});
+		} else {
+			this.cube.setState(lastChange.oldState, {
+				history: -1
+			});
+		}
+		
+	}
+	stepAhead() {
+		
+		if(this.isAtEnd()) throw 'Cannot go further ahead';
+		
+		var nextChange = this.changes[this.currentChangeIndex + 1];
+		if(nextChange.transition) {
+			this.cube.transition(nextChange.transition, {
+				history: 1
+			});
+		} else {
+			this.cube.setState(nextChange.newState, {
+				history: 1
+			});
+		}
+		
+	}
+	jumpToStart() {
+	
+		if(this.currentChangeIndex <= -1) return;
+	
+		this.cube.setState(this.cubeStartState, {
+			history: -this.currentChangeIndex - 1
+		});
+		
+	}
+	jumpToEnd() {
+	
+		if(this.currentChangeIndex >= this.changes.length - 1) return;
+	
+		if(this.changes.length === 0) {
+			return;
+		}
+	
+		var headChange = this.changes[this.changes.length - 1];
+		this.cube.setState(headChange.newState, {
+			history: this.changes.length - 1 - this.currentChangeIndex
+		});
+		
+	}
+	jumpToIndex(newIndex) {
+	
+		if(newIndex === -1) {
+			this.jumpToStart();
+			return;
+		}
+	
+		var newChange = this.changes[newIndex];
+		this.cube.setState(newChange.newState, {
+			history: newIndex - this.currentChangeIndex
+		});
+		
+	}
+}
+
+//TODO: Where does the state and the transition needed to be copied
+
+</script>
+
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark">
+  <span class="navbar-brand">Rubix</span>
+</nav>
+
+<main class="container-fluid">
+	<div class="row">
+		<article id="panel-cube" class="col-lg p-0 panel">
+			<section class="btn-toolbar">
+				<div class="btn-group btn-group-sm">
+					<div class="btn-group btn-group-sm">
+						<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"><img src="bootstrap-icons/box-arrow-in-right.svg" /><span>Import</span></button>
+						<div class="dropdown-menu">
+							<span class="dropdown-item">Cube Builder</span>
+							<div class="dropdown-divider"></div>
+							<span class="dropdown-item">Insert CSL code</span>
+							<span class="dropdown-item">Upload CSL file</span>
+						</div>
+					</div>
+					<div class="btn-group btn-group-sm">
+						<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"><img src="bootstrap-icons/box-arrow-right.svg" /><span>Export</span></button>
+						<div class="dropdown-menu">
+							<span class="dropdown-item">Show CSL code</span>
+							<span class="dropdown-item">Download CSL file</span>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section id="section-cube-display" style="text-align: center; font-size: 3em; "></section>
+			<section id="section-cube-control">
+				<div>
+					<button type="button" id="button-cube-left"   class="btn btn-primary">Left 1</button>
+					<button type="button" id="button-cube-center" class="btn btn-primary">Center 2</button>
+					<button type="button" id="button-cube-right"  class="btn btn-primary">Right 3</button>
+				</div>
+				<div>
+					<button type="button" id="button-cube-top"    class="btn btn-primary">Top 4</button>
+					<button type="button" id="button-cube-ground" class="btn btn-primary">Ground 5</button>
+					<button type="button" id="button-cube-bottom" class="btn btn-primary">Bottom 6</button>
+				</div>
+				<div>
+					<button type="button" id="button-cube-front"  class="btn btn-primary">Front 7</button>
+					<button type="button" id="button-cube-middle" class="btn btn-primary">Middle 8</button>
+					<button type="button" id="button-cube-stern"  class="btn btn-primary">Stern 9</button>
+				</div>
+			</section>
+		</article>
+		<article id="panel-program" class="col-lg border-left p-0 panel">
+			<section class="btn-toolbar">
+				<div class="btn-group btn-group-sm">
+					<button type="button" id="button-editor-stop"     class="btn btn-danger"  title="Stop running" disabled="true"><img src="bootstrap-icons/stop-fill.svg" /></button>
+					<button type="button" id="button-editor-run"      class="btn btn-primary" title="Run program"><img src="bootstrap-icons/play-fill.svg" /><span>Run</span></button>
+					<button type="button" id="button-editor-run-fast" class="btn btn-primary" title="Run program fast (not animated)"><img src="own-icons/fast-forward.svg" /><span>Run fast</span></button>
+				</div>
+				<div class="btn-group btn-group-sm ml-2">
+					<button type="button" id="button-editor-undo" class="btn btn-secondary" title="Undo last edit action" disabled="true"><img class="flip" src="bootstrap-icons/reply-fill.svg" /></button>
+					<button type="button" id="button-editor-redo" class="btn btn-secondary" title="Redo last undone edit action" disabled="true"><img src="bootstrap-icons/reply-fill.svg" /></button>
+				</div>
+				<div class="btn-group btn-group-sm ml-2">
+					<button type="button" id="button-editor-search" class="btn btn-secondary" title="Show search bar"><img src="bootstrap-icons/search.svg" /></button>
+				</div>
+				<div class="btn-group btn-group-sm ml-2">
+					<button type="button" id="button-editor-show-invisibles" class="btn btn-secondary" data-toggle="button" title="Show/Hide invisible characters"><img src="bootstrap-icons/paragraph.svg" /></button>
+				</div>
+			</section>
+			<section id="editor"></section>
+		</article>
+	</div>
+	<div class="row">
+		<article id="panel-history" class="col-lg p-0 panel">
+			<section class="btn-toolbar">
+				<div class="btn-group btn-group-sm">
+					<button type="button" id="button-history-jump-start" class="btn btn-secondary" title="Jump to start"><img src="bootstrap-icons/skip-backward-fill.svg" /></button>
+					<button type="button" id="button-history-play-back"  class="btn btn-secondary" title="Play back"><img src="own-icons/play-back.svg" /></button>
+					<button type="button" id="button-history-step-back"  class="btn btn-secondary" title="Play step back"><img src="bootstrap-icons/skip-start-fill.svg" /></button>
+					<button type="button" id="button-history-stop"       class="btn btn-danger"    title="Stop playing" disabled="true"><img src="bootstrap-icons/stop-fill.svg" /></button>
+					<button type="button" id="button-history-step-ahead" class="btn btn-secondary" title="Play step ahead"><img src="bootstrap-icons/skip-end-fill.svg" /></button>
+					<button type="button" id="button-history-play-ahead" class="btn btn-secondary" title="Play ahead"><img src="bootstrap-icons/play-fill.svg" /></button>
+					<button type="button" id="button-history-jump-end"   class="btn btn-secondary" title="Jump to end"><img src="bootstrap-icons/skip-forward-fill.svg" /></button>
+				</div>
+				<div class="btn-group btn-group-sm ml-2">
+					<button type="button" id="button-marker-jump-last" class="btn btn-secondary" title="Jump to last marker"><img src="bootstrap-icons/skip-backward.svg" /></button>
+					<input type="text" id="input-marker-name" class="form-control" style="display: inline-block; width: 300px; height: 34px; " placeholder="Marker name ...">
+					<button type="button" id="button-marker-action" class="btn btn-success" title="Set marker"><img src="bootstrap-icons/plus.svg" /></button>
+					<button type="button" id="button-marker-jump-next" class="btn btn-secondary" title="Jump to next marker"><img src="bootstrap-icons/skip-forward.svg" /></button>
+				</div>
+			</section>
+			<section id="section-history-changes"></section>
+		</article>
+	</div>
+</main>
+
+</body>
+</html>
