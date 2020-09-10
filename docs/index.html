@@ -16,38 +16,26 @@
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
 <script src="https://pagecdn.io/lib/ace/1.4.12/ace.js" crossorigin="anonymous" integrity="sha256-Q9hnBpgBFstzZOr+OKFOWZWfcF5nFXO8Qz48Nmndo6U="></script>
-<script src="https://github.com/lukaslentner/cube-codes-model/releases/download/0.0.10/cube-codes-model-0.0.10-browser.js"></script>
+<script src="cube-codes-model.min.js"></script>
+<script src="ProgramRunner.js"></script>
 <script src="scripts.js"></script>
 
 </head>
 <body>
 
+<div id="toast-zone"></div>
+
 <nav class="navbar navbar-dark bg-dark">
-	<span class="navbar-brand"><img src="own-icons/cube.svg" style="vertical-align: text-bottom; height: 28px; margin-right: 6px; filter: invert(1); " />Cube-Codes Console</span>
+	<span class="navbar-brand"><img src="own-icons/cube.svg" />Cube-Codes Console</span>
+	<div class="btn-group ml-auto">
+		<button type="button" id="button-share" class="btn btn-secondary"><img src="bootstrap-icons/share-fill.svg" /><span>Share</span></button>
+	</div>
 </nav>
 
 <main class="container-fluid">
 	<div class="row">
 		<article id="panel-cube" class="col-lg p-0 panel">
 			<section class="btn-toolbar">
-				<div class="btn-group btn-group-sm">
-					<div class="btn-group btn-group-sm">
-						<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"><img src="bootstrap-icons/box-arrow-in-right.svg" /><span>Import</span></button>
-						<div class="dropdown-menu">
-							<span class="dropdown-item">Cube Builder</span>
-							<div class="dropdown-divider"></div>
-							<span class="dropdown-item">Insert CSL code</span>
-							<span class="dropdown-item">Upload CSL file</span>
-						</div>
-					</div>
-					<div class="btn-group btn-group-sm">
-						<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"><img src="bootstrap-icons/box-arrow-right.svg" /><span>Export</span></button>
-						<div class="dropdown-menu">
-							<span class="dropdown-item">Show CSL code</span>
-							<span class="dropdown-item">Download CSL file</span>
-						</div>
-					</div>
-				</div>
 			</section>
 			<section id="section-cube-display" style="text-align: center; font-size: 3em; "></section>
 			<section id="section-cube-control">
@@ -178,11 +166,20 @@
 					</div>
 				</div>
 			</section>
+			<section id="section-cube-control" class="mt-4">
+				<div class="btn-group">
+					<button type="button" id="button-cube-import"  class="btn btn-primary"><img src="bootstrap-icons/upload.svg" /><span>Import</span></button>
+					<button type="button" id="button-cube-export"  class="btn btn-primary"><img src="bootstrap-icons/download.svg" /><span>Export</span></button>
+				</div>
+				<div class="btn-group">
+					<button type="button" id="button-cube-shuffle" class="btn btn-primary"><img src="bootstrap-icons/shuffle.svg" /><span>Shuffle</span></button>
+				</div>
+			</section>
 		</article>
 		<article id="panel-program" class="col-lg border-left p-0 panel">
 			<section class="btn-toolbar">
 				<div class="btn-group btn-group-sm">
-					<button type="button" id="button-editor-stop"     class="btn btn-danger"  title="Stop running" disabled="true"><img src="bootstrap-icons/stop-fill.svg" /></button>
+					<button type="button" id="button-editor-abort"    class="btn btn-danger"  title="Abort program" disabled="true"><img src="bootstrap-icons/stop-fill.svg" /></button>
 					<button type="button" id="button-editor-run"      class="btn btn-primary" title="Run program"><img src="bootstrap-icons/play-fill.svg" /><span>Run</span></button>
 					<button type="button" id="button-editor-run-fast" class="btn btn-primary" title="Run program fast (not animated)"><img src="own-icons/fast-forward.svg" /><span>Run fast</span></button>
 				</div>
@@ -195,28 +192,43 @@
 				</div>
 				<div class="btn-group btn-group-sm ml-2">
 					<button type="button" id="button-editor-show-invisibles" class="btn btn-secondary" data-toggle="button" title="Show/Hide invisible characters"><img src="bootstrap-icons/paragraph.svg" /></button>
+					<!--<button type="button" id="button-editor-fullscreen"      class="btn btn-secondary" data-toggle="button" title="Enter/Leave fullscreen mode"><img src="bootstrap-icons/arrows-fullscreen.svg" /></button>-->
+					<button type="button" id="button-editor-font-increase"   class="btn btn-secondary" title="Increase font size"><img src="bootstrap-icons/zoom-in.svg" /></button>
+					<button type="button" id="button-editor-font-decrease"   class="btn btn-secondary" title="Decrease font size"><img src="bootstrap-icons/zoom-out.svg" /></button>
+				</div>
+				<div class="btn-group btn-group-sm ml-auto">
+					<button type="button" id="button-editor-clean"       class="btn btn-secondary" title="Clean logs"><img src="bootstrap-icons/trash.svg" /></button>
+					<button type="button" id="button-editor-lock-scroll" class="btn btn-secondary active" data-toggle="button" aria-pressed="true" title="Lock log scrolling"><img src="bootstrap-icons/chevron-bar-down.svg" /></button>
 				</div>
 			</section>
 			<section id="editor"></section>
+			<section id="logger"></section>
 		</article>
 	</div>
 	<div class="row">
 		<article id="panel-history" class="col-lg p-0 panel">
 			<section class="btn-toolbar">
 				<div class="btn-group btn-group-sm">
-					<button type="button" id="button-history-jump-start" class="btn btn-secondary" title="Jump to start"><img src="bootstrap-icons/skip-backward-fill.svg" /></button>
-					<button type="button" id="button-history-play-back"  class="btn btn-secondary" title="Play back"><img class="flip" src="bootstrap-icons/play-fill.svg" /></button>
-					<button type="button" id="button-history-step-back"  class="btn btn-secondary" title="Play step back"><img src="bootstrap-icons/skip-start-fill.svg" /></button>
-					<button type="button" id="button-history-stop"       class="btn btn-danger"    title="Stop playing" disabled="true"><img src="bootstrap-icons/stop-fill.svg" /></button>
-					<button type="button" id="button-history-step-ahead" class="btn btn-secondary" title="Play step ahead"><img src="bootstrap-icons/skip-end-fill.svg" /></button>
-					<button type="button" id="button-history-play-ahead" class="btn btn-secondary" title="Play ahead"><img src="bootstrap-icons/play-fill.svg" /></button>
-					<button type="button" id="button-history-jump-end"   class="btn btn-secondary" title="Jump to end"><img src="bootstrap-icons/skip-forward-fill.svg" /></button>
+					<button type="button" id="button-history-jump-start" class="btn btn-primary" title="Jump to start"><img src="bootstrap-icons/skip-backward-fill.svg" /></button>
+					<button type="button" id="button-history-play-back"  class="btn btn-primary" title="Play back"><img class="flip" src="bootstrap-icons/play-fill.svg" /></button>
+					<button type="button" id="button-history-step-back"  class="btn btn-primary" title="Play step back"><img src="bootstrap-icons/skip-start-fill.svg" /></button>
+					<button type="button" id="button-history-abort"      class="btn btn-danger"  title="Abort playing" disabled="true"><img src="bootstrap-icons/stop-fill.svg" /></button>
+					<button type="button" id="button-history-step-ahead" class="btn btn-primary" title="Play step ahead"><img src="bootstrap-icons/skip-end-fill.svg" /></button>
+					<button type="button" id="button-history-play-ahead" class="btn btn-primary" title="Play ahead"><img src="bootstrap-icons/play-fill.svg" /></button>
+					<button type="button" id="button-history-jump-end"   class="btn btn-primary" title="Jump to end"><img src="bootstrap-icons/skip-forward-fill.svg" /></button>
 				</div>
 				<div class="btn-group btn-group-sm ml-2">
+					<button type="button" id="button-history-clean-past"   class="btn btn-secondary"  title="Clean past"  ><img src="bootstrap-icons/backspace.svg" /></button>
+					<button type="button" id="button-history-clean-future" class="btn btn-secondary"  title="Clean future"><img src="bootstrap-icons/backspace-reverse.svg" /></button>
+				</div>
+				<!--<div class="btn-group btn-group-sm ml-2">
 					<button type="button" id="button-marker-jump-last" class="btn btn-secondary" title="Jump to last marker"><img src="bootstrap-icons/skip-backward.svg" /></button>
 					<input type="text" id="input-marker-name" class="form-control" style="display: inline-block; width: 300px; height: 34px; " placeholder="Marker name ...">
 					<button type="button" id="button-marker-action" class="btn btn-success" title="Set marker"><img src="bootstrap-icons/plus.svg" /></button>
 					<button type="button" id="button-marker-jump-next" class="btn btn-secondary" title="Jump to next marker"><img src="bootstrap-icons/skip-forward.svg" /></button>
+				</div>-->
+				<div class="btn-group btn-group-sm ml-auto">
+					<button type="button" id="button-history-lock-scroll" class="btn btn-secondary active" data-toggle="button" aria-pressed="true" title="Lock scrolling"><img src="bootstrap-icons/chevron-bar-down.svg" /></button>
 				</div>
 			</section>
 			<section id="section-history-changes"></section>
