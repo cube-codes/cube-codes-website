@@ -1,0 +1,92 @@
+main > .row:nth-child(1) {
+    min-height: calc(100vh - 56px - 100px);
+}
+
+main > .row:nth-child(2) {
+    height: 100px;
+}
+
+.panel > .btn-toolbar {
+    background-color: #DDD;
+    padding: 8px 16px;
+    height: 50px;
+}
+
+#panel-control > .btn-toolbar {
+    margin: 0 -15px;
+}
+
+.btn > img {
+     filter: invert(1);
+     margin-top: -4px;
+}
+
+.btn > img + span {
+     margin-left: 6px;
+}
+
+.dropdown-item {
+    cursor: pointer;
+}
+
+img.flip {
+    transform: scaleX(-1);
+}
+
+#panel-control > section {
+    text-align: center;
+    margin: 80px 0;
+}
+
+#section-cube-control {
+    text-align: center;
+}
+
+#section-cube-control .btn-group:nth-child(5) {
+    margin: 0 0 0 30px;
+}
+
+#section-cube-control .btn-group button:nth-child(1) {
+    width: 105px;
+    margin: 0 0 10px 5px;
+    text-align: left;
+}
+
+#section-cube-control .btn-group button:nth-child(2) {
+    margin: 0 5px 10px 0;
+}
+
+#section-history-changes {
+    position: absolute;
+    top: 50px;
+    bottom: 0;
+    width: 100%;
+    overflow-x: scroll;
+}
+
+#section-history-changes > span {
+    display: inline-block;
+    padding: 2px;
+    margin-left: 1px;
+    border: 1px solid #EEE;
+    background-color: #EEE;
+    font-family: monospace;
+    cursor: pointer;
+}
+
+#section-history-changes > span.current {
+    border-color: #BBB;
+    background-color: #BBB;
+}
+
+#section-history-changes > span:hover {
+    border-color: #CCC;
+    background-color: #CCC;
+}
+
+#editor {
+    position: absolute;
+    top: 50px;
+    bottom: 0;
+    width: 100%;
+}

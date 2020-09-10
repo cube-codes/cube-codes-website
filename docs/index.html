@@ -9,376 +9,15 @@
 
 <link rel="icon" href="favicon.ico">
 
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
-
-<style type="text/css">
-
-	main > .row:nth-child(1) {
-		min-height: calc(100vh - 56px - 100px);
-	}
-
-	main > .row:nth-child(2) {
-		height: 100px;
-	}
-	
-	.panel > .btn-toolbar {
-		background-color: #DDD;
-		padding: 8px 16px;
-		height: 50px;
-	}
-	
-	#panel-control > .btn-toolbar {
-		margin: 0 -15px;
-	}
-	
-	.btn > img {
-		 filter: invert(1);
-		 margin-top: -4px;
-	}
-	
-	.btn > img + span {
-		 margin-left: 6px;
-	}
-	
-	.dropdown-item {
-		cursor: pointer;
-	}
-	
-	img.flip {
-		transform: scaleX(-1);
-	}
-	
-	#panel-control > section {
-		text-align: center;
-		margin: 80px 0;
-	}
-
-	#section-cube-control {
-		text-align: center;
-	}
-
-	#section-cube-control button {
-		width: 100px;
-		margin: 0 5px 10px 5px;
-	}
-	
-	#section-history-changes {
-		position: absolute;
-		top: 50px;
-		bottom: 0;
-		width: 100%;
-		overflow-x: scroll;
-	}
-	
-	#section-history-changes > span {
-		display: inline-block;
-		padding: 2px;
-		margin-left: 1px;
-		border: 1px solid #EEE;
-		background-color: #EEE;
-		font-family: monospace;
-		cursor: pointer;
-	}
-	
-	#section-history-changes > span.current {
-		border-color: #BBB;
-		background-color: #BBB;
-	}
-	
-	#section-history-changes > span:hover {
-		border-color: #CCC;
-		background-color: #CCC;
-	}
-	
-	#editor {
-		position: absolute;
-		top: 50px;
-		bottom: 0;
-		width: 100%;
-	}
-
-</style>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous" />
+<link rel="stylesheet" href="styles.css" />
 
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
 <script src="https://pagecdn.io/lib/ace/1.4.12/ace.js" crossorigin="anonymous" integrity="sha256-Q9hnBpgBFstzZOr+OKFOWZWfcF5nFXO8Qz48Nmndo6U="></script>
-<script type="text/javascript">
-
-var editor;
-var cube;
-
-	$(function() {
-
-		editor = ace.edit('editor', {
-			mode: 'ace/mode/javascript',
-			newLineMode: 'unix',
-			useSoftTabs: false,
-			tabSize: 4,
-			dragEnabled: false,
-			showPrintMargin: false,
-			theme: 'ace/theme/textmate',
-			fixedWidthGutter: true
-		});
-		editor.renderer.setScrollMargin(6, 0, 0, 0);
-		editor.on('input', function() {
-			$('#button-editor-undo').prop('disabled', !editor.session.getUndoManager().hasUndo());
-			$('#button-editor-redo').prop('disabled', !editor.session.getUndoManager().hasRedo());
-		});
-		
-		$('#button-editor-run'            ).on('click', function(e) { /*TODO To worker thread */ Function('"use strict";' + "\n" + editor.getValue())(); });
-		$('#button-editor-undo'           ).on('click', function(e) { editor.undo(); });
-		$('#button-editor-redo'           ).on('click', function(e) { editor.redo(); });
-		$('#button-editor-search'         ).on('click', function(e) { editor.execCommand('find'); });
-		$('#button-editor-show-invisibles').on('click', function(e) { editor.setOption('showInvisibles', !editor.getOption('showInvisibles')); });
-
-		cube = new Cube(0);
-		cube.on('change', function(e) { this.log('Event: cube.change', e); }, console);
-		cube.on('change', function(e) { this.html(e.newState); }, $('#section-cube-display'));
-		$('#section-cube-display').html(cube.getState());
-		
-		var cubeHistory = new CubeHistory(cube);
-		cubeHistory.on('move', function(e) { this.log('Event: cubeHistory.move', e); }, console);
-		cubeHistory.on('record', function(e) { this.log('Event: cubeHistory.record', e); }, console);
-		cubeHistory.on('branchCleaned', function(e) { this.log('Event: cubeHistory.branchCleaned', e); }, console);
-		cubeHistory.on('move', function(e) { $('#section-history-changes > span:nth-child(' + (e.from + 2) + ')').removeClass('current'); $('#section-history-changes > span:nth-child(' + (e.to + 2) + ')').addClass('current'); }, console);
-		cubeHistory.on('record', function(e) { $('#section-history-changes').append('<span>' + (e.change.transition || 'S') + '</span>'); }, console);
-		cubeHistory.on('branchCleaned', function(e) { $('#section-history-changes').children().slice(e.from + 1).remove(); }, console);
-		$('#section-history-changes').append('<span class="current">I</span>');
-		var updateHistoryButtons = function() {
-			$('#button-history-jump-start').prop('disabled', cubeHistory.isAtStart());
-			$('#button-history-play-back' ).prop('disabled', cubeHistory.isAtStart());
-			$('#button-history-step-back' ).prop('disabled', cubeHistory.isAtStart());
-			$('#button-history-step-ahead').prop('disabled', cubeHistory.isAtEnd());
-			$('#button-history-play-ahead').prop('disabled', cubeHistory.isAtEnd());
-			$('#button-history-jump-end'  ).prop('disabled', cubeHistory.isAtEnd());
-		};
-		cubeHistory.on('move', updateHistoryButtons);
-		updateHistoryButtons();
-		$('#section-history-changes').on('click', 'span', function(e) {  cubeHistory.jumpToIndex($(this).index() - 1); });
-
-		$('#button-history-jump-start').on('click', function(e) { cubeHistory.jumpToStart(); });
-		$('#button-history-jump-end'  ).on('click', function(e) { cubeHistory.jumpToEnd(); });
-		$('#button-history-step-back' ).on('click', function(e) { cubeHistory.stepBack(); });
-		$('#button-history-step-ahead').on('click', function(e) { cubeHistory.stepAhead(); });
-		
-		$('#button-cube-left'  ).on('click', function(e) { cube.transition(1); });
-		$('#button-cube-center').on('click', function(e) { cube.transition(2); });
-		$('#button-cube-right' ).on('click', function(e) { cube.transition(3); });
-		$('#button-cube-top'   ).on('click', function(e) { cube.transition(4); });
-		$('#button-cube-ground').on('click', function(e) { cube.transition(5); });
-		$('#button-cube-bottom').on('click', function(e) { cube.transition(6); });
-		$('#button-cube-front' ).on('click', function(e) { cube.transition(7); });
-		$('#button-cube-middle').on('click', function(e) { cube.transition(8); });
-		$('#button-cube-stern' ).on('click', function(e) { cube.transition(9); });
-
-	});
-	
-class EventType {
-	constructor() {
-		this.name = name;
-		this.listeners = [];
-	}
-	registerListener(callback, scope) {
-		this.listeners.push({
-			callback: callback,
-			scope: scope
-		});
-	}
-}
-
-class Observable {
-	constructor() {
-		this.eventTypes = {};
-	}
-	registerEventType(name) {
-		var eventType = new EventType(name);
-		this.eventTypes[name] = eventType;
-	}
-	trigger(eventTypeName, event) {
-		this.eventTypes[eventTypeName].listeners.forEach(function(listener) {
-			listener.callback.apply(listener.scope, [event]);
-		});
-	}
-	on(eventTypeName, callback, scope) {
-		this.eventTypes[eventTypeName].registerListener(callback, scope);
-	}
-}
-
-class Cube extends Observable {
-	constructor(state) {
-	
-		super();
-		
-		this.state = state;
-		
-		this.registerEventType('change');
-		
-	}
-	getState() {
-		return this.state;
-	}
-	setState(newState, sender) {
-		var oldState = this.state;
-		this.state = newState;
-		this.trigger('change', {
-			oldState: oldState,
-			newState: newState,
-			sender: sender
-		});
-	}
-	transition(value, sender) {
-		var oldState = this.state;
-		this.state += value;
-		this.trigger('change', {
-			transition: value,
-			oldState: oldState,
-			newState: this.state,
-			sender: sender
-		});
-	}
-}
-
-class CubeHistory extends Observable {
-	constructor(cube) {
-		
-		super();
-		
-		this.cube = cube;
-		this.cubeStartState = this.cube.getState();
-		this.changes = [];
-		this.currentChangeIndex = -1;
-		
-		this.registerEventType('move');
-		this.registerEventType('record');
-		this.registerEventType('branchCleaned');
-		
-		this.cube.on('change', function(e) {
-		
-			// If the change was triggered by the history, do not record but move only
-			if(e.sender && typeof e.sender.history === 'number') {
-				var oldCurrentChangeIndex = this.currentChangeIndex;
-				this.currentChangeIndex += e.sender.history;
-				this.trigger('move', {
-					from: oldCurrentChangeIndex,
-					by: e.sender.history,
-					to: this.currentChangeIndex
-				});
-				return;
-			}
-			
-			var nextIndex = this.currentChangeIndex + 1;
-			
-			// If we are currently not at the end, remove the history ahead of us
-			if(this.changes.length !== nextIndex) {
-				//TODO: Ask whether this is ok!!!
-				this.changes.splice(nextIndex, this.changes.length - nextIndex);
-				this.trigger('branchCleaned', {
-					from: nextIndex
-				});
-			}
-			
-			// Record change and move
-			var newChange = {
-				transition: e.transition,
-				oldState: e.oldState,
-				newState: e.newState
-			};
-			this.changes.push(newChange);
-			this.trigger('record', {
-				change: newChange,
-				index: this.currentChangeIndex + 1
-			});
-			var oldCurrentChangeIndex = this.currentChangeIndex;
-			this.currentChangeIndex++;
-			this.trigger('move', {
-				from: oldCurrentChangeIndex,
-				by: 1,
-				to: this.currentChangeIndex
-			});
-			
-		}, this);
-		
-	}
-	isAtStart() {
-		return this.currentChangeIndex <= -1;
-	}
-	isAtEnd() {
-		return this.currentChangeIndex >= this.changes.length - 1;
-	}
-	stepBack() {
-		
-		if(this.isAtStart()) throw 'Cannot go further back';
-		
-		var lastChange = this.changes[this.currentChangeIndex];
-		if(lastChange.transition) {
-			this.cube.transition(-lastChange.transition, {
-				history: -1
-			});
-		} else {
-			this.cube.setState(lastChange.oldState, {
-				history: -1
-			});
-		}
-		
-	}
-	stepAhead() {
-		
-		if(this.isAtEnd()) throw 'Cannot go further ahead';
-		
-		var nextChange = this.changes[this.currentChangeIndex + 1];
-		if(nextChange.transition) {
-			this.cube.transition(nextChange.transition, {
-				history: 1
-			});
-		} else {
-			this.cube.setState(nextChange.newState, {
-				history: 1
-			});
-		}
-		
-	}
-	jumpToStart() {
-	
-		if(this.currentChangeIndex <= -1) return;
-	
-		this.cube.setState(this.cubeStartState, {
-			history: -this.currentChangeIndex - 1
-		});
-		
-	}
-	jumpToEnd() {
-	
-		if(this.currentChangeIndex >= this.changes.length - 1) return;
-	
-		if(this.changes.length === 0) {
-			return;
-		}
-	
-		var headChange = this.changes[this.changes.length - 1];
-		this.cube.setState(headChange.newState, {
-			history: this.changes.length - 1 - this.currentChangeIndex
-		});
-		
-	}
-	jumpToIndex(newIndex) {
-	
-		if(newIndex === -1) {
-			this.jumpToStart();
-			return;
-		}
-	
-		var newChange = this.changes[newIndex];
-		this.cube.setState(newChange.newState, {
-			history: newIndex - this.currentChangeIndex
-		});
-		
-	}
-}
-
-//TODO: Where does the state and the transition needed to be copied
-
-</script>
+<script src="https://github.com/lukaslentner/cube-codes-model/releases/download/0.0.10/cube-codes-model-0.0.10-browser.js"></script>
+<script src="scripts.js"></script>
 
 </head>
 <body>
@@ -413,19 +52,130 @@ class CubeHistory extends Observable {
 			<section id="section-cube-display" style="text-align: center; font-size: 3em; "></section>
 			<section id="section-cube-control">
 				<div>
-					<button type="button" id="button-cube-left"   class="btn btn-primary">Left 1</button>
-					<button type="button" id="button-cube-center" class="btn btn-primary">Center 2</button>
-					<button type="button" id="button-cube-right"  class="btn btn-primary">Right 3</button>
+					<div class="btn-group">
+						<button type="button" id="button-cube-front" class="btn btn-primary">Front</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-front-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-front-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-front-middle" class="btn btn-primary">Front & M</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-front-middle-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-front-middle-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-back-middle" class="btn btn-primary">Back & M</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-back-middle-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-back-middle-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-back" class="btn btn-primary">Back</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-back-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-back-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-z" class="btn btn-primary">Z-Rotation</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-z-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-z-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
 				</div>
 				<div>
-					<button type="button" id="button-cube-top"    class="btn btn-primary">Top 4</button>
-					<button type="button" id="button-cube-ground" class="btn btn-primary">Ground 5</button>
-					<button type="button" id="button-cube-bottom" class="btn btn-primary">Bottom 6</button>
+					<div class="btn-group">
+						<button type="button" id="button-cube-left" class="btn btn-primary">Left</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-left-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-left-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-left-middle" class="btn btn-primary">Left & M</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-left-middle-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-left-middle-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-right-middle" class="btn btn-primary">Right & M</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-right-middle-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-right-middle-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-right" class="btn btn-primary">Right</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-right-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-right-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-x" class="btn btn-primary">X-Rotation</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-x-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-x-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
 				</div>
 				<div>
-					<button type="button" id="button-cube-front"  class="btn btn-primary">Front 7</button>
-					<button type="button" id="button-cube-middle" class="btn btn-primary">Middle 8</button>
-					<button type="button" id="button-cube-stern"  class="btn btn-primary">Stern 9</button>
+					<div class="btn-group">
+						<button type="button" id="button-cube-up" class="btn btn-primary">Up</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-up-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-up-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-up-middle" class="btn btn-primary">Up & M</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-up-middle-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-up-middle-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-down-middle" class="btn btn-primary">Down & M</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-down-middle-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-down-middle-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-down" class="btn btn-primary">Down</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-down-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-down-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
+					<div class="btn-group">
+						<button type="button" id="button-cube-y" class="btn btn-primary">Y-Rotation</button>
+						<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" />
+						<div class="dropdown-menu">
+							<span id="dropdown-item-cube-y-two"  class="dropdown-item">Double</span>
+							<span id="dropdown-item-cube-y-invert" class="dropdown-item">Invert</span>
+						</div>
+					</div>
 				</div>
 			</section>
 		</article>
