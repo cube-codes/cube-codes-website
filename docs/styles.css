@@ -1,3 +1,7 @@
+* {
+    user-select: none;
+}
+
 .navbar .navbar-brand img {
     vertical-align: text-bottom;
     height: 28px;
@@ -21,7 +25,12 @@
     color: inherit;
     background-color: inherit;
     border-bottom: none;
-    padding: 0.25rem 0.75rem 0.4rem 0.75rem;
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+
+#toast-zone > .toast > .toast-header > img {
+    filter: invert(1);
+    margin-right: 10px;
 }
 
 #toast-zone > .toast > .toast-header > .close {
@@ -60,6 +69,7 @@ main > .row:nth-child(2) {
 .btn > img {
      filter: invert(1);
      margin-top: -4px;
+     width: 16px;
 }
 
 .btn > img + span {
@@ -83,12 +93,16 @@ img.flip {
     text-align: center;
 }
 
-#section-cube-control .btn-group:nth-child(5) {
+#section-cube-control .btn-group:nth-child(6) {
     margin: 0 0 0 30px;
 }
 
+#section-cube-control .btn-group:nth-child(6) button:nth-child(1) {
+    width: 110px;
+}
+
 #section-cube-control .btn-group button:nth-child(1) {
-    width: 105px;
+    width: 90px;
     margin: 0 0 10px 5px;
     text-align: left;
 }
@@ -107,22 +121,20 @@ img.flip {
 
 #section-history-changes > span {
     display: inline-block;
-    padding: 2px;
-    margin-left: 1px;
-    border: 1px solid #EEE;
-    background-color: #EEE;
-    font-family: monospace;
+    padding: 6px !important;
+    margin: 4px 0 0 4px;
     cursor: pointer;
+    font-weight: normal;
 }
 
 #section-history-changes > span.current {
-    border-color: #BBB;
-    background-color: #BBB;
+    background-color: var(--primary) !important;
+    color: white;
 }
 
 #section-history-changes > span:hover {
-    border-color: #CCC;
-    background-color: #CCC;
+    background-color: var(--secondary);
+    color: white;
 }
 
 #editor {
@@ -130,6 +142,7 @@ img.flip {
     top: 50px;
     bottom: 300px;
     width: 100%;
+    overflow-y: scroll;
 }
 
 #logger {
@@ -144,7 +157,11 @@ img.flip {
     overflow-x: auto;
     background-color: #f0f0f0;
     padding: 12px;
-    border-top: 1px solid #dee2e6!important
+    border-top: 1px solid #dee2e6 !important;
+}
+
+#logger * {
+    user-select: text;
 }
 
 #logger > .log.text-info {

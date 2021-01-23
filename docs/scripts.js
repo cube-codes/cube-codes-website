@@ -3,7 +3,7 @@
 const addLog = (text, color, withDate) => {
 	let date = '';
 	if(withDate) {
-		date = '[' + new Date().toLocaleTimeString('en-US', {timeStyle: 'short', hour12: false}) + '] ';
+		date = '[' + new Date().toLocaleTimeString('en-US', { hourCycle: 'h23' }) + '] ';
 	}
 	$(`<div class="log text-${color}">${date}${text}</div>`).appendTo('#logger');
 	if($('#button-editor-lock-scroll').hasClass('active')) {
@@ -13,7 +13,13 @@ const addLog = (text, color, withDate) => {
 const addLogSeperator = () => addLog("&nbsp;\n" + '-'.repeat(80) + "\n&nbsp;", 'info', false);
 
 const addToast = (title, text, color, delay) => {
-	const toast = $(`<div class="toast bg-${color} text-light" data-delay="${delay}"><div class="toast-header"><strong>${title}</strong><button type="button" class="ml-auto close" data-dismiss="toast">×</button></div><div class="toast-body">${text}</div></div>`).appendTo('#toast-zone');
+	const icons = new Map([
+		['info'   , 'info-circle-fill.svg'],
+		['success', 'check-circle-fill.svg'],
+		['warning', 'exclamation-circle-fill.svg'],
+		['danger' , 'x-circle-fill.svg']
+	]);
+	const toast = $(`<div class="toast bg-${color} text-light" data-delay="${delay}"><div class="toast-header"><img src="bootstrap-icons/${icons.get(color)}" /><strong>${title}</strong><button type="button" class="ml-auto close" data-dismiss="toast">×</button></div><div class="toast-body">${text}</div></div>`).appendTo('#toast-zone');
 	toast.on('hidden.bs.toast', () => {
 		toast.remove();
 	});
@@ -22,7 +28,22 @@ const addToast = (title, text, color, delay) => {
 
 window.addEventListener('beforeunload', e => event.returnValue = 'Are you sure you want to leave?');
 
+
+
 $(function() {
+
+	startApplication();
+
+});
+
+const hideLoader = () => {
+
+	$('#loader').empty();
+	$('#loader').fadeOut(300);
+
+};
+
+const startApplication = () => {
 
 	// Cube
 
@@ -84,10 +105,10 @@ $(function() {
 	// Display Cube History Moves
 
 	cubeHistory.moved.on(e => { $('#section-history-changes > span.current').removeClass('current'); $('#section-history-changes > span:nth-child(' + (cubeHistory.getCurrentPosition() + 2) + ')').addClass('current'); });
-	cubeHistory.recorded.on(e => { $('#section-history-changes').append('<span>' + (e.change.move ? cube.getMoveLanguage().stringify([e.change.move]) : 'Manual') + '</span>'); if($('#button-history-lock-scroll').hasClass('active')) { $('#section-history-changes').scrollTop($('#section-history-changes').prop("scrollHeight")); } });
+	cubeHistory.recorded.on(e => { $('#section-history-changes').append('<span class="badge badge-light">' + (e.change.move ? cube.getMoveLanguage().stringify([e.change.move]) : 'Manual') + '</span>'); if($('#button-history-lock-scroll').hasClass('active')) { $('#section-history-changes').scrollTop($('#section-history-changes').prop("scrollHeight")); } });
 	cubeHistory.pastCleaned.on(e => { $('#section-history-changes').children().slice(0, e.before + 1).remove(); $('#section-history-changes > span.current').removeClass('current'); $('#section-history-changes > span:nth-child(' + (cubeHistory.getCurrentPosition() + 2) + ')').addClass('current'); $('#section-history-changes > span:first-child').html('Manual'); });
 	cubeHistory.futureCleaned.on(e => { $('#section-history-changes').children().slice(e.after + 2).remove(); $('#section-history-changes > span.current').removeClass('current'); $('#section-history-changes > span:nth-child(' + (cubeHistory.getCurrentPosition() + 2) + ')').addClass('current'); });
-	$('#section-history-changes').append('<span class="current">Manual</span>');
+	$('#section-history-changes').append('<span class="badge badge-light current">Manual</span>');
 	
 	// Update Cube History Controls
 
@@ -123,13 +144,17 @@ $(function() {
 	$('#dropdown-item-cube-front-two').on('click', e => cube.mFront(CC.CubeAngle.C180));
 	$('#dropdown-item-cube-front-invert').on('click', e => cube.mFront(CC.CubeAngle.CC90));
 	
-	$('#button-cube-front-middle').on('click', e => cube.mwFront(2));
-	$('#dropdown-item-cube-front-middle-two').on('click', e => cube.mwFront(2, CC.CubeAngle.C180));
-	$('#dropdown-item-cube-front-middle-invert').on('click', e => cube.mwFront(2, CC.CubeAngle.CC90));
+	$('#button-cube-front-stand').on('click', e => cube.mwFront(2));
+	$('#dropdown-item-cube-front-stand-two').on('click', e => cube.mwFront(2, CC.CubeAngle.C180));
+	$('#dropdown-item-cube-front-stand-invert').on('click', e => cube.mwFront(2, CC.CubeAngle.CC90));
 	
-	$('#button-cube-back-middle').on('click', e => cube.mwBack(2));
-	$('#dropdown-item-cube-back-middle-two').on('click', e => cube.mwBack(2, CC.CubeAngle.C180));
-	$('#dropdown-item-cube-back-middle-invert').on('click', e => cube.mwBack(2, CC.CubeAngle.CC90));
+	$('#button-cube-stand').on('click', e => null); //TODO: Implement
+	$('#dropdown-item-cube-stand-two').on('click', e => null); //TODO: Implement
+	$('#dropdown-item-cube-stand-invert').on('click', e => null); //TODO: Implement
+	
+	$('#button-cube-back-stand').on('click', e => cube.mwBack(2));
+	$('#dropdown-item-cube-back-stand-two').on('click', e => cube.mwBack(2, CC.CubeAngle.C180));
+	$('#dropdown-item-cube-back-stand-invert').on('click', e => cube.mwBack(2, CC.CubeAngle.CC90));
 	
 	$('#button-cube-back').on('click', e => cube.mBack());
 	$('#dropdown-item-cube-back-two').on('click', e => cube.mBack(CC.CubeAngle.C180));
@@ -147,6 +172,10 @@ $(function() {
 	$('#dropdown-item-cube-left-middle-two').on('click', e => cube.mwLeft(2, CC.CubeAngle.C180));
 	$('#dropdown-item-cube-left-middle-invert').on('click', e => cube.mwLeft(2, CC.CubeAngle.CC90));
 	
+	$('#button-cube-middle').on('click', e => null); //TODO: Implement
+	$('#dropdown-item-cube-middle-two').on('click', e => null); //TODO: Implement
+	$('#dropdown-item-cube-middle-invert').on('click', e => null); //TODO: Implement
+	
 	$('#button-cube-right-middle').on('click', e => cube.mwRight(2));
 	$('#dropdown-item-cube-right-middle-two').on('click', e => cube.mwRight(2, CC.CubeAngle.C180));
 	$('#dropdown-item-cube-right-middle-invert').on('click', e => cube.mwRight(2, CC.CubeAngle.CC90));
@@ -163,13 +192,17 @@ $(function() {
 	$('#dropdown-item-cube-up-two').on('click', e => cube.mUp(CC.CubeAngle.C180));
 	$('#dropdown-item-cube-up-invert').on('click', e => cube.mUp(CC.CubeAngle.CC90));
 	
-	$('#button-cube-up-middle').on('click', e => cube.mwUp(2));
-	$('#dropdown-item-cube-up-middle-two').on('click', e => cube.mwUp(2, CC.CubeAngle.C180));
-	$('#dropdown-item-cube-up-middle-invert').on('click', e => cube.mwUp(2, CC.CubeAngle.CC90));
+	$('#button-cube-up-equator').on('click', e => cube.mwUp(2));
+	$('#dropdown-item-cube-up-equator-two').on('click', e => cube.mwUp(2, CC.CubeAngle.C180));
+	$('#dropdown-item-cube-up-equator-invert').on('click', e => cube.mwUp(2, CC.CubeAngle.CC90));
 	
-	$('#button-cube-down-middle').on('click', e => cube.mwDown(2));
-	$('#dropdown-item-cube-down-middle-two').on('click', e => cube.mwDown(2, CC.CubeAngle.C180));
-	$('#dropdown-item-cube-down-middle-invert').on('click', e => cube.mwDown(2, CC.CubeAngle.CC90));
+	$('#button-cube-equator').on('click', e => null); //TODO: Implement
+	$('#dropdown-item-cube-equator-two').on('click', e => null); //TODO: Implement
+	$('#dropdown-item-cube-equator-invert').on('click', e => null); //TODO: Implement
+	
+	$('#button-cube-down-equator').on('click', e => cube.mwDown(2));
+	$('#dropdown-item-cube-down-equator-two').on('click', e => cube.mwDown(2, CC.CubeAngle.C180));
+	$('#dropdown-item-cube-down-equator-invert').on('click', e => cube.mwDown(2, CC.CubeAngle.CC90));
 	
 	$('#button-cube-down').on('click', e => cube.mDown());
 	$('#dropdown-item-cube-down-two').on('click', e => cube.mDown(CC.CubeAngle.C180));
@@ -179,6 +212,8 @@ $(function() {
 	$('#dropdown-item-cube-y-two').on('click', e => cube.rY(CC.CubeAngle.C180));
 	$('#dropdown-item-cube-y-invert').on('click', e => cube.rY(CC.CubeAngle.CC90));
 
-	$('#button-cube-shuffle').on('click', e => cube.shuffle());
+	$('#button-cube-shuffle').on('click', e => null); //TODO: Implement
 
-});
+	hideLoader();
+
+};

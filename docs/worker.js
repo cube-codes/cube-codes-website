@@ -1,6 +1,6 @@
 'use strict';
 
-importScripts('cube-codes-model.min.js');
+importScripts('libs/cube-codes-model/cube-codes-model.min.js');
 
 let workerDone = false;
 const newEvents = [];
@@ -8,7 +8,7 @@ let newEventPromise;
 let cube;
 
 const _log = (type, text) => {
-	sendEventAsMessage({
+	scheduleEvent({
 		Log: {
 			type: type,
 			text: text
@@ -21,7 +21,7 @@ const logWarning = text => _log('warning', text);
 const logError   = text => _log('error',   text);
 
 const _display = (type, title, text = '', delay = 3000) => {
-	sendEventAsMessage({
+	scheduleEvent({
 		Display: {
 			type: type,
 			title: title,
@@ -36,7 +36,8 @@ const displayWarning = (title, text = '', delay = 3000) => _display('warning', t
 const displayError   = (title, text = '', delay = 3000) => _display('error',   title, text, delay);
 
 const cubeStateChangedHandler = e => {
-	newEvents.push({
+	
+	const event = {
 		CubeStateChanged: {//TODO: Proper Serialization
 			oldState: {
 				value: e.oldState.value
@@ -50,8 +51,10 @@ const cubeStateChangedHandler = e => {
 				angle: e.move.angle
 			}
 		}
-	});
-	newEventPromise?.resolve(true);
+	};
+
+	scheduleEvent(event);
+
 };
 
 const onHostStarted = e => {
@@ -76,7 +79,12 @@ const onHostStarted = e => {
 		};
 	}
 	
-	newEvents.push(event);
+	scheduleEvent(event);
+
+};
+
+const scheduleEvent = e => {
+	newEvents.push(e);
 	newEventPromise?.resolve(true);
 };
 

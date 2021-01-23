@@ -64,7 +64,7 @@ class ProgramRunner {
 			}
 		};
 		this.worker.onerror = e => {
-			console.debug('ProgramRunner: onerror: ', error);
+			console.debug('ProgramRunner: onerror: ', e);
 			this.onWorkerCrashed({
 				WorkerFailed: {
 					error: e
@@ -130,24 +130,32 @@ class ProgramRunner {
 	onLog(e) {
 		
 		const colors = new Map([
-			['info', 'info'],
+			['info'   , 'info'],
 			['success', 'success'],
 			['warning', 'warning'],
-			['error', 'danger']
-		  ])
+			['error'  , 'danger']
+		]);
 		addLog(e.text, colors.get(e.type) ?? 'info', false);
+
+		this.worker.postMessage({
+			HostEventAsked: {}
+		});
 
 	}
 
 	onDisplay(e) {
 		
 		const colors = new Map([
-			['info', 'info'],
+			['info'   , 'info'],
 			['success', 'success'],
 			['warning', 'warning'],
-			['error', 'danger']
-		  ])
+			['error'  , 'danger']
+		]);
 		addToast(`Program: ${e.title}`, e.text, colors.get(e.type) ?? 'info', e.delay);
+
+		this.worker.postMessage({
+			HostEventAsked: {}
+		});
 
 	}
 
