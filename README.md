@@ -9,3 +9,8 @@ https://en.wikipedia.org/wiki/Rubik%27s_Cube#Move_notation
 https://github.com/seanfrasure/cuber
 
 https://github.com/cubing/standards/tree/gh-pages/draft
+
+## Fix mid cross
+
+V-cube 7: https://www.youtube.com/watch?v=OkM02vBhAgA
+V-cube 4: https://www.youtube.com/watch?v=QMS8ErN3exc
