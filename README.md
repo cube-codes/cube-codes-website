@@ -5,6 +5,7 @@
 * https://en.wikipedia.org/wiki/Rubik%27s_Cube#Move_notation
 * https://github.com/seanfrasure/cuber
 * https://github.com/cubing/standards/tree/gh-pages/draft
+* https://fmcsolves.cubing.net/fmc_tutorial_ENG.pdf
 
 ## Fix mid cross
 
